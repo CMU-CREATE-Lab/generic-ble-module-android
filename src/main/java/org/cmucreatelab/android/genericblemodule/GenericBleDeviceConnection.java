@@ -48,11 +48,35 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
         Log.i(LOG_TAG, "onCharacteristicChanged! value="+value);
     }
 
+    @Override
+    public void onCharacteristicRead(BluetoothGatt gatt,
+                                     BluetoothGattCharacteristic characteristic,
+                                     int status) {
+        if (status == BluetoothGatt.GATT_SUCCESS) {
+            String value = new String(characteristic.getValue());
+            Log.i(LOG_TAG, "onCharacteristicRead! value="+value);
+        }
+    }
+
+    @Override
+    public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+        if (status == BluetoothGatt.GATT_SUCCESS) {
+            Log.i(LOG_TAG, "onCharacteristicWrite!");
+        }
+    }
+
     public void writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] value) {
         // TODO check null pointer?
         characteristic.setValue(value);
         if(gatt.writeCharacteristic(characteristic) == false){
             Log.w(LOG_TAG, "Failed to write characteristic");
+        }
+    }
+
+    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
+        // TODO check null pointer?
+        if(gatt.readCharacteristic(characteristic) == false){
+            Log.w(LOG_TAG, "Failed to read characteristic");
         }
     }
 
