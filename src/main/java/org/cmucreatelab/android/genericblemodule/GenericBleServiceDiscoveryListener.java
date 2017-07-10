@@ -6,7 +6,7 @@ import android.bluetooth.BluetoothGatt;
  * Created by mike on 7/7/17.
  */
 
-public interface GenericBleServiceListener {
+public interface GenericBleServiceDiscoveryListener {
 
     void onServicesDiscovered(BluetoothGatt gatt, int status);
 
