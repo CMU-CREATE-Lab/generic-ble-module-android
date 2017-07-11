@@ -5,9 +5,12 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.util.Log;
+
+import java.util.UUID;
 
 /**
  * Created by mike on 7/7/17.
@@ -17,7 +20,11 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
 
     private static final String LOG_TAG = "genericblemodule";
 
-    public BluetoothGatt gatt;
+    private BluetoothGatt gatt;
+    private boolean isConnected = false;
+    private Context appContext;
+    private BluetoothDevice device;
+
     final private GenericBleServiceDiscoveryListener serviceDiscoveryListener;
     final private GenericBleConnectionListener connectionListener;
     final private GenericBleCharacteristicListener characteristicListener;
@@ -26,21 +33,19 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
     private static final GenericBleConnectionListener defaultConnectionListener = new GenericBleConnectionListener() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.i(LOG_TAG, "Connected to GATT server.");
-                gatt.discoverServices();
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                Log.i(LOG_TAG, "Disconnected from GATT server.");
-            }
+            if (newState == BluetoothProfile.STATE_CONNECTED) gatt.discoverServices();
         }
     };
 
     public GenericBleDeviceConnection(BluetoothDevice device, Context appContext, final GenericBleConnectionListener connectionListener, final GenericBleServiceDiscoveryListener serviceDiscoveryListener, final GenericBleCharacteristicListener characteristicListener, final GenericBleDescriptorListener descriptorListener) {
+        this.device = device;
+        this.appContext = appContext;
+
         this.connectionListener = connectionListener;
         this.serviceDiscoveryListener = serviceDiscoveryListener;
         this.characteristicListener = characteristicListener;
         this.descriptorListener = descriptorListener;
-        this.gatt = device.connectGatt(appContext,false,this);
+        //this.gatt = device.connectGatt(appContext,false,this);
     }
 
     public GenericBleDeviceConnection(BluetoothDevice device, Context appContext, final GenericBleServiceDiscoveryListener serviceDiscoveryListener, final GenericBleCharacteristicListener characteristicListener, final GenericBleDescriptorListener descriptorListener) {
@@ -51,6 +56,13 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
 
     @Override
     public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+        if (newState == BluetoothProfile.STATE_CONNECTED) {
+            Log.i(LOG_TAG, "Connected to GATT server.");
+            this.isConnected = true;
+        } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+            Log.i(LOG_TAG, "Disconnected from GATT server.");
+            this.isConnected = false;
+        }
         connectionListener.onConnectionStateChange(gatt, status, newState);
     }
 
@@ -115,6 +127,28 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
         gatt.setCharacteristicNotification(characteristic, enabled);
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
         gatt.writeDescriptor(descriptor);
+    }
+
+    // ---- Class helpers
+
+    public boolean isConnected() {
+        return this.isConnected;
+    }
+
+    public void connect() {
+        this.gatt = device.connectGatt(appContext,false,this);
+    }
+
+    public void disconnect() {
+        this.gatt.disconnect();
+    }
+
+    public BluetoothGattService getService(UUID uuid) {
+        return gatt.getService(uuid);
+    }
+
+    public void send() {
+        // TODO message/type as parameter
     }
 
 }
