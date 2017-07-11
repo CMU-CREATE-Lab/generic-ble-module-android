@@ -41,6 +41,8 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
         listener.onServicesDiscovered(gatt, status);
     }
 
+    // ---- (GenericBleCharacteristicListener)
+
     @Override
     public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
         super.onCharacteristicChanged(gatt, characteristic);
@@ -49,9 +51,7 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
     }
 
     @Override
-    public void onCharacteristicRead(BluetoothGatt gatt,
-                                     BluetoothGattCharacteristic characteristic,
-                                     int status) {
+    public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
         if (status == BluetoothGatt.GATT_SUCCESS) {
             String value = new String(characteristic.getValue());
             Log.i(LOG_TAG, "onCharacteristicRead! value="+value);
@@ -65,6 +65,21 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
         }
     }
 
+    // ---- (GenericBleDescriptorListener)
+
+    @Override
+    public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+        super.onDescriptorRead(gatt, descriptor, status);
+    }
+
+    @Override
+    public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+        super.onDescriptorWrite(gatt, descriptor, status);
+    }
+
+    // ----
+
+    // asynchronous
     public void writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] value) {
         // TODO check null pointer?
         characteristic.setValue(value);
@@ -73,6 +88,7 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
         }
     }
 
+    // asynchronous
     public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
         // TODO check null pointer?
         if(gatt.readCharacteristic(characteristic) == false){
@@ -80,6 +96,7 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
         }
     }
 
+    // asynchronous
     public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic, BluetoothGattDescriptor descriptor, boolean enabled) {
         // TODO check null pointer?
         gatt.setCharacteristicNotification(characteristic, enabled);
