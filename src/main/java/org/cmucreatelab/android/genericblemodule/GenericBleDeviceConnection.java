@@ -18,63 +18,76 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
     private static final String LOG_TAG = "genericblemodule";
 
     public BluetoothGatt gatt;
-    final private GenericBleServiceDiscoveryListener listener;
+    final private GenericBleServiceDiscoveryListener serviceDiscoveryListener;
+    final private GenericBleConnectionListener connectionListener;
+    final private GenericBleCharacteristicListener characteristicListener;
+    final private GenericBleDescriptorListener descriptorListener;
 
-    public GenericBleDeviceConnection(BluetoothDevice device, Context appContext, final GenericBleServiceDiscoveryListener listener) {
-        this.listener = listener;
+    private static final GenericBleConnectionListener defaultConnectionListener = new GenericBleConnectionListener() {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                Log.i(LOG_TAG, "Connected to GATT server.");
+                gatt.discoverServices();
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                Log.i(LOG_TAG, "Disconnected from GATT server.");
+            }
+        }
+    };
+
+    public GenericBleDeviceConnection(BluetoothDevice device, Context appContext, final GenericBleConnectionListener connectionListener, final GenericBleServiceDiscoveryListener serviceDiscoveryListener, final GenericBleCharacteristicListener characteristicListener, final GenericBleDescriptorListener descriptorListener) {
+        this.connectionListener = connectionListener;
+        this.serviceDiscoveryListener = serviceDiscoveryListener;
+        this.characteristicListener = characteristicListener;
+        this.descriptorListener = descriptorListener;
         this.gatt = device.connectGatt(appContext,false,this);
     }
 
+    public GenericBleDeviceConnection(BluetoothDevice device, Context appContext, final GenericBleServiceDiscoveryListener serviceDiscoveryListener, final GenericBleCharacteristicListener characteristicListener, final GenericBleDescriptorListener descriptorListener) {
+        this(device, appContext, defaultConnectionListener, serviceDiscoveryListener, characteristicListener, descriptorListener);
+    }
+
+    // ---- (GenericBleConnectionListener)
+
     @Override
     public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-        super.onConnectionStateChange(gatt, status, newState);
-        if (newState == BluetoothProfile.STATE_CONNECTED) {
-            Log.i(LOG_TAG, "Connected to GATT server.");
-            gatt.discoverServices();
-        } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-            Log.i(LOG_TAG, "Disconnected from GATT server.");
-        }
+        connectionListener.onConnectionStateChange(gatt, status, newState);
     }
+
+    // ---- (GenericBleServiceDiscoveryListener)
 
     @Override
     public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-        listener.onServicesDiscovered(gatt, status);
+        serviceDiscoveryListener.onServicesDiscovered(gatt, status);
     }
 
     // ---- (GenericBleCharacteristicListener)
 
     @Override
     public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-        super.onCharacteristicChanged(gatt, characteristic);
-        String value = new String(characteristic.getValue());
-        Log.i(LOG_TAG, "onCharacteristicChanged! value="+value);
+        characteristicListener.onCharacteristicChanged(gatt, characteristic);
     }
 
     @Override
     public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-        if (status == BluetoothGatt.GATT_SUCCESS) {
-            String value = new String(characteristic.getValue());
-            Log.i(LOG_TAG, "onCharacteristicRead! value="+value);
-        }
+        characteristicListener.onCharacteristicRead(gatt, characteristic, status);
     }
 
     @Override
     public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-        if (status == BluetoothGatt.GATT_SUCCESS) {
-            Log.i(LOG_TAG, "onCharacteristicWrite!");
-        }
+        characteristicListener.onCharacteristicWrite(gatt, characteristic, status);
     }
 
     // ---- (GenericBleDescriptorListener)
 
     @Override
     public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-        super.onDescriptorRead(gatt, descriptor, status);
+        descriptorListener.onDescriptorRead(gatt, descriptor, status);
     }
 
     @Override
     public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-        super.onDescriptorWrite(gatt, descriptor, status);
+        descriptorListener.onDescriptorWrite(gatt, descriptor, status);
     }
 
     // ----
