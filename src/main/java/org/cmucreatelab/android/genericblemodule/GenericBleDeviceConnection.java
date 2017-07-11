@@ -140,7 +140,7 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
     }
 
     public void disconnect() {
-        this.gatt.disconnect();
+        this.gatt.close();
     }
 
     public BluetoothGattService getService(UUID uuid) {
