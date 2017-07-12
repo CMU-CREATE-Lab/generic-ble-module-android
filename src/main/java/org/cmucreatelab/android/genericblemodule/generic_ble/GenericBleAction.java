@@ -8,6 +8,11 @@ import android.bluetooth.BluetoothGatt;
 
 public abstract class GenericBleAction {
 
+    /**
+     * Called by GenericBleDeviceConnection.send to perform the class-specific action.
+     *
+     * @param gatt instance of BluetoothGatt from GenericBleDeviceConnection
+     */
     public abstract void doAction(BluetoothGatt gatt);
 
 }

@@ -1,14 +1,12 @@
 package org.cmucreatelab.android.genericblemodule.generic_ble;
 
-import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 /**
  * Created by mike on 7/6/17.
@@ -16,25 +14,29 @@ import android.support.v4.content.ContextCompat;
 
 public class GenericBleScanner {
 
-    private BluetoothAdapter mBluetoothAdapter;
+    private BluetoothAdapter bluetoothAdapter;
+    private Handler handler;
+    private boolean isScanning;
 
-    private int REQUEST_ENABLE_BT;
-    private boolean mScanning;
-    private Handler mHandler;
-
+    private static final int REQUEST_ENABLE_BT = 0;
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
 
 
-    public GenericBleScanner() {
-        this.mHandler = new Handler();
+    private void getBluetoothAdapter(Activity activity) {
+        final BluetoothManager bluetoothManager = (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
+        bluetoothAdapter = bluetoothManager.getAdapter();
     }
 
-    private void getBluetoothAdapter(Activity activity) {
-        // Initializes Bluetooth adapter.
-        final BluetoothManager bluetoothManager =
-                (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
+
+    public GenericBleScanner() {
+        this.handler = new Handler();
+        this.isScanning = false;
+    }
+
+
+    public boolean isScanning() {
+        return isScanning;
     }
 
 
@@ -44,28 +46,32 @@ public class GenericBleScanner {
         getBluetoothAdapter(activity);
         // Ensures Bluetooth is available on the device and it is enabled. If not,
         // displays a dialog requesting user permission to enable Bluetooth.
-        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             activity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
     }
 
-    public void scanLeDevice(final boolean enable, final BluetoothAdapter.LeScanCallback mLeScanCallback) {
+
+    public void scanLeDevice(final boolean enable, final BluetoothAdapter.LeScanCallback leScanCallback) {
+        if (bluetoothAdapter == null) {
+            Log.e(GenericBleDeviceConnection.LOG_TAG, "Tried to scanLeDevice before enableBluetooth");
+            return;
+        }
         if (enable) {
             // Stops scanning after a pre-defined scan period.
-            mHandler.postDelayed(new Runnable() {
+            handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    mScanning = false;
-                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                    isScanning = false;
+                    bluetoothAdapter.stopLeScan(leScanCallback);
                 }
             }, SCAN_PERIOD);
-
-            mScanning = true;
-            mBluetoothAdapter.startLeScan(mLeScanCallback);
+            isScanning = true;
+            bluetoothAdapter.startLeScan(leScanCallback);
         } else {
-            mScanning = false;
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+            isScanning = false;
+            bluetoothAdapter.stopLeScan(leScanCallback);
         }
     }
 
