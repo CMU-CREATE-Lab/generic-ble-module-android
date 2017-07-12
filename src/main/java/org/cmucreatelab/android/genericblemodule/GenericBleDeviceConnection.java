@@ -10,6 +10,8 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.util.Log;
 
+import org.cmucreatelab.android.genericblemodule.ble_actions.GenericBleAction;
+
 import java.util.UUID;
 
 /**
@@ -18,7 +20,7 @@ import java.util.UUID;
 
 public class GenericBleDeviceConnection extends BluetoothGattCallback {
 
-    private static final String LOG_TAG = "genericblemodule";
+    public static final String LOG_TAG = "genericblemodule";
 
     private BluetoothGatt gatt;
     private boolean isConnected = false;
@@ -104,31 +106,6 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
 
     // ----
 
-    // asynchronous
-    public void writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] value) {
-        // TODO check null pointer?
-        characteristic.setValue(value);
-        if(gatt.writeCharacteristic(characteristic) == false){
-            Log.w(LOG_TAG, "Failed to write characteristic");
-        }
-    }
-
-    // asynchronous
-    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
-        // TODO check null pointer?
-        if(gatt.readCharacteristic(characteristic) == false){
-            Log.w(LOG_TAG, "Failed to read characteristic");
-        }
-    }
-
-    // asynchronous
-    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic, BluetoothGattDescriptor descriptor, boolean enabled) {
-        // TODO check null pointer?
-        gatt.setCharacteristicNotification(characteristic, enabled);
-        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        gatt.writeDescriptor(descriptor);
-    }
-
     // ---- Class helpers
 
     public boolean isConnected() {
@@ -140,6 +117,7 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
     }
 
     public void disconnect() {
+        // TODO double-check this is all we need (vs. disconnect, and do we need to track isConnected)
         this.gatt.close();
     }
 
@@ -147,8 +125,8 @@ public class GenericBleDeviceConnection extends BluetoothGattCallback {
         return gatt.getService(uuid);
     }
 
-    public void send() {
-        // TODO message/type as parameter
+    public void send(GenericBleAction action) {
+        action.doAction(this.gatt);
     }
 
 }
