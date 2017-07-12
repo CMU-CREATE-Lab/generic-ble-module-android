@@ -1,4 +1,4 @@
-package org.cmucreatelab.android.genericblemodule;
+package org.cmucreatelab.android.genericblemodule.generic_ble.listeners;
 
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;

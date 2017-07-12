@@ -1,4 +1,4 @@
-package org.cmucreatelab.android.genericblemodule.ble_actions;
+package org.cmucreatelab.android.genericblemodule.generic_ble;
 
 import android.bluetooth.BluetoothGatt;
 

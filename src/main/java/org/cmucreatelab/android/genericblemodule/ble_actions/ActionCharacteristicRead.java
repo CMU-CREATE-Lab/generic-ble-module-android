@@ -4,7 +4,8 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.util.Log;
 
-import org.cmucreatelab.android.genericblemodule.GenericBleDeviceConnection;
+import org.cmucreatelab.android.genericblemodule.generic_ble.GenericBleAction;
+import org.cmucreatelab.android.genericblemodule.generic_ble.GenericBleDeviceConnection;
 
 /**
  * Created by mike on 7/11/17.

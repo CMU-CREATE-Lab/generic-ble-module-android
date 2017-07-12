@@ -1,4 +1,4 @@
-package org.cmucreatelab.android.genericblemodule;
+package org.cmucreatelab.android.genericblemodule.generic_ble;
 
 import android.Manifest;
 import android.app.Activity;
