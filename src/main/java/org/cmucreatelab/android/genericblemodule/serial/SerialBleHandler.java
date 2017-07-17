@@ -9,16 +9,13 @@ import android.util.Log;
 
 import org.cmucreatelab.android.genericblemodule.ble_actions.ActionCharacteristicWrite;
 import org.cmucreatelab.android.genericblemodule.ble_actions.ActionWaitForNotify;
-import org.cmucreatelab.android.genericblemodule.generic_ble.GenericBleAction;
 import org.cmucreatelab.android.genericblemodule.generic_ble.GenericBleDeviceConnection;
 import org.cmucreatelab.android.genericblemodule.generic_ble.GenericBleScanner;
 import org.cmucreatelab.android.genericblemodule.generic_ble.listeners.GenericBleCharacteristicListener;
-import org.cmucreatelab.android.genericblemodule.generic_ble.listeners.GenericBleConnectionListener;
 import org.cmucreatelab.android.genericblemodule.generic_ble.listeners.GenericBleDescriptorListener;
 import org.cmucreatelab.android.genericblemodule.generic_ble.listeners.GenericBleServiceDiscoveryListener;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * Created by mike on 7/12/17.
@@ -41,18 +38,6 @@ public class SerialBleHandler {
     private ActionQueue actionQueue;
     private GenericBleDeviceConnection deviceConnection;
     // listeners for BluetoothGattCallback methods (implement?)
-//    private final GenericBleServiceDiscoveryListener serviceDiscoveryListener = new GenericBleServiceDiscoveryListener() {
-//        @Override
-//        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-//
-//        }
-//    };
-//    private final GenericBleConnectionListener connectionListener = new GenericBleConnectionListener() {
-//        @Override
-//        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-//
-//        }
-//    };
     private final GenericBleCharacteristicListener characteristicListener = new GenericBleCharacteristicListener() {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
@@ -69,9 +54,12 @@ public class SerialBleHandler {
                 Log.e(GenericBleDeviceConnection.LOG_TAG, "onCharacteristicChanged on bad response");
                 return;
             }
+            ActionWaitForNotify action = ((ActionWaitForNotify) actionQueue.getCurrentAction());
+            action.concatResponse(new String(response));
             if (new String(response).contains(terminatingString)) {
                 Log.i(GenericBleDeviceConnection.LOG_TAG, "onCharacteristicChanged FINISHED RESPONSE!");
                 actionQueue.notifyResponseReceived();
+                action.notifyReceivedWithResponse();
             }
         }
 
@@ -102,10 +90,6 @@ public class SerialBleHandler {
         }
     };
 
-    // a hashmap with characteristics (specific UUIDs) as keys, and the list of notification messages as values
-    private HashMap<BluetoothGattCharacteristic,ArrayList<String>> characteristicResponses;
-    // TODO confirm the response has terminated string, then getCurrentAction() will retrieve the message you sent and you construct the response
-
     public SerialBleHandler(Context appContext) {
         this.appContext = appContext;
         this.scanner = new GenericBleScanner();
@@ -116,14 +100,14 @@ public class SerialBleHandler {
             @Override
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    actionQueue = new ActionQueue(deviceConnection);
                     connectionListener.onConnected(gatt);
                 } else {
-                    Log.e(GenericBleDeviceConnection.LOG_TAG, "got bad status="+status);
+                        Log.e(GenericBleDeviceConnection.LOG_TAG, "got bad status="+status);
                 }
             }
         };
         this.deviceConnection = new GenericBleDeviceConnection(device, this.appContext, serviceDiscoveryListener, characteristicListener, descriptorListener);
+        this.actionQueue = new ActionQueue(deviceConnection);
         this.deviceConnection.connect();
     }
 
@@ -149,7 +133,7 @@ public class SerialBleHandler {
         }
 
         // send ActionWaitForNotify
-        actionQueue.addAction(new ActionWaitForNotify());
+        actionQueue.addAction(new ActionWaitForNotify(message, notificationListener));
     }
 
     // connect/disconnect

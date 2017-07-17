@@ -11,9 +11,27 @@ import org.cmucreatelab.android.genericblemodule.serial.SerialBleHandler;
 
 public class ActionWaitForNotify extends GenericBleAction {
 
+    private String message;
+    private String response;
+    private SerialBleHandler.NotificationListener notificationListener;
+
+    public ActionWaitForNotify(String message, SerialBleHandler.NotificationListener notificationListener) {
+        this.message = message;
+        this.notificationListener = notificationListener;
+        this.response = new String();
+    }
+
+    public void concatResponse(String value) {
+        this.response = response.concat(value);
+    }
+
     @Override
     public void doAction(BluetoothGatt gatt) {
         // does nothing
+    }
+
+    public void notifyReceivedWithResponse() {
+        notificationListener.onNotificationReceived(message,response);
     }
 
 }

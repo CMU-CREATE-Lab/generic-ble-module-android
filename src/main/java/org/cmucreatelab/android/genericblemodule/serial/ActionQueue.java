@@ -15,19 +15,20 @@ public class ActionQueue {
 
     private GenericBleAction currentAction;
     private GenericBleDeviceConnection deviceConnection;
-//    private final Timer queueTimeout;
+    private final Timer queueTimeout;
     private final ConcurrentLinkedQueue<GenericBleAction> actions;
-    private static final int TIMEOUT_IN_MILLISECONDS = 4000;
+    private static final int TIMEOUT_IN_MILLISECONDS = 5000;
     private boolean isWaitingForResponse = false;
 
     public ActionQueue(GenericBleDeviceConnection deviceConnection) {
         this.deviceConnection = deviceConnection;
-//        queueTimeout = new Timer(TIMEOUT_IN_MILLISECONDS) {
-//            @Override
-//            public void timerExpires() {
-//                // TODO disconnect when timer expires
-//            }
-//        };
+        queueTimeout = new Timer(TIMEOUT_IN_MILLISECONDS) {
+            @Override
+            public void timerExpires() {
+                // TODO disconnect when timer expires
+                Log.e(GenericBleDeviceConnection.LOG_TAG, "timerExpires");
+            }
+        };
         actions = new ConcurrentLinkedQueue<>();
     }
 
@@ -65,13 +66,13 @@ public class ActionQueue {
                 this.currentAction = actions.poll();
                 isWaitingForResponse = true;
                 deviceConnection.send(currentAction);
-//                queueTimeout.startTimer();
+                queueTimeout.startTimer();
             }
         }
     }
 
     public synchronized void notifyResponseReceived() {
-//        queueTimeout.stopTimer();
+        queueTimeout.stopTimer();
         if (isWaitingForResponse) {
             isWaitingForResponse = false;
             nextAction();
