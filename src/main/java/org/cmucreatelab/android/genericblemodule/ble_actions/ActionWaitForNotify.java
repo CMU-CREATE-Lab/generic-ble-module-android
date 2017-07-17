@@ -3,6 +3,7 @@ package org.cmucreatelab.android.genericblemodule.ble_actions;
 import android.bluetooth.BluetoothGatt;
 
 import org.cmucreatelab.android.genericblemodule.generic_ble.GenericBleAction;
+import org.cmucreatelab.android.genericblemodule.serial.SerialBleHandler;
 
 /**
  * Created by mike on 7/14/17.
