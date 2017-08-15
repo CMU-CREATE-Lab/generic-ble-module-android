@@ -24,6 +24,8 @@ import java.util.ArrayList;
 public class SerialBleHandler {
 
     private final Context appContext;
+    private static final int CONNECTION_TIMEOUT = 5000; // milliseconds
+    private Timer connectionTimer;
 
     public GenericBleScanner getScanner() {
         return scanner;
@@ -96,19 +98,35 @@ public class SerialBleHandler {
     }
 
     public void connectDevice(BluetoothDevice device, final ConnectionListener connectionListener) {
+        connectionTimer = new Timer(CONNECTION_TIMEOUT) {
+            @Override
+            public void timerExpires() {
+                deviceConnection.disconnect();
+                connectionTimer = null;
+                connectionListener.onTimeout();
+            }
+        };
         final GenericBleServiceDiscoveryListener serviceDiscoveryListener = new GenericBleServiceDiscoveryListener() {
             @Override
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    connectionListener.onConnected(gatt);
+                    if (connectionTimer != null) {
+                        connectionTimer.stopTimer();
+                        connectionListener.onConnected(gatt);
+                    }
                 } else {
-                        Log.e(GenericBleDeviceConnection.LOG_TAG, "got bad status="+status);
+                    Log.e(GenericBleDeviceConnection.LOG_TAG, "got bad status="+status+", treating as timeout");
+                    if (connectionTimer != null) {
+                        connectionTimer.stopTimer();
+                        connectionTimer.timerExpires();
+                    }
                 }
             }
         };
         this.deviceConnection = new GenericBleDeviceConnection(device, this.appContext, serviceDiscoveryListener, characteristicListener, descriptorListener);
         this.actionQueue = new ActionQueue(deviceConnection);
         this.deviceConnection.connect();
+        connectionTimer.startTimer();
     }
 
     // message-sending
@@ -146,6 +164,7 @@ public class SerialBleHandler {
 
     public interface ConnectionListener {
         void onConnected(BluetoothGatt gatt);
+        void onTimeout();
     }
 
 }
