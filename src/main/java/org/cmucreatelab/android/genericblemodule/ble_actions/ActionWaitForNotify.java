@@ -31,7 +31,9 @@ public class ActionWaitForNotify extends GenericBleAction {
     }
 
     public void notifyReceivedWithResponse() {
-        notificationListener.onNotificationReceived(message,response);
+        // remove terminating character
+        String trimmedResponse = response.substring(0,response.length()-1);
+        notificationListener.onNotificationReceived(message,trimmedResponse);
     }
 
 }
