@@ -42,20 +42,22 @@ public class GenericBleScanner {
 
     // ASSERT: the application has sufficient permissions at this point to enable bluetooth; see ContextCompat.checkSelfPermission and ActivityCompat.requestPermissions
     // NOTE: api level 23 and above requires Manifest.permission.ACCESS_FINE_LOCATION
-    public void enableBluetooth(Activity activity) {
+    public boolean needsToRequestBluetoothEnabled(Activity activity) {
         getBluetoothAdapter(activity);
         // Ensures Bluetooth is available on the device and it is enabled. If not,
         // displays a dialog requesting user permission to enable Bluetooth.
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             activity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            return true;
         }
+        return false;
     }
 
 
-    public void scanLeDevice(final boolean enable, final BluetoothAdapter.LeScanCallback leScanCallback) {
+    public void scanLeDevice(final boolean enable, final ScannerCallback scannerCallback) {
         if (bluetoothAdapter == null) {
-            Log.e(GenericBleDeviceConnection.LOG_TAG, "Tried to scanLeDevice before enableBluetooth");
+            Log.e(GenericBleDeviceConnection.LOG_TAG, "Tried to scanLeDevice before needsToRequestBluetoothEnabled");
             return;
         }
         if (enable) {
@@ -64,15 +66,21 @@ public class GenericBleScanner {
                 @Override
                 public void run() {
                     isScanning = false;
-                    bluetoothAdapter.stopLeScan(leScanCallback);
+                    bluetoothAdapter.stopLeScan(scannerCallback);
+                    scannerCallback.onScanTimerExpired();
                 }
             }, SCAN_PERIOD);
             isScanning = true;
-            bluetoothAdapter.startLeScan(leScanCallback);
+            bluetoothAdapter.startLeScan(scannerCallback);
         } else {
             isScanning = false;
-            bluetoothAdapter.stopLeScan(leScanCallback);
+            bluetoothAdapter.stopLeScan(scannerCallback);
         }
+    }
+
+
+    public interface ScannerCallback extends BluetoothAdapter.LeScanCallback {
+        void onScanTimerExpired();
     }
 
 }
