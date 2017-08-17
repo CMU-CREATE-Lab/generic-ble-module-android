@@ -20,13 +20,13 @@ public class ActionQueue {
     private static final int TIMEOUT_IN_MILLISECONDS = 5000;
     private boolean isWaitingForResponse = false;
 
-    public ActionQueue(GenericBleDeviceConnection deviceConnection) {
+    public ActionQueue(final GenericBleDeviceConnection deviceConnection) {
         this.deviceConnection = deviceConnection;
         queueTimeout = new Timer(TIMEOUT_IN_MILLISECONDS) {
             @Override
             public void timerExpires() {
-                // TODO disconnect when timer expires
-                Log.e(GenericBleDeviceConnection.LOG_TAG, "timerExpires");
+                Log.e(GenericBleDeviceConnection.LOG_TAG, "ActionQueue.timerExpires");
+                ActionQueue.this.deviceConnection.disconnect();
             }
         };
         actions = new ConcurrentLinkedQueue<>();

@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.util.Log;
 
@@ -12,6 +13,7 @@ import org.cmucreatelab.android.genericblemodule.ble_actions.ActionWaitForNotify
 import org.cmucreatelab.android.genericblemodule.generic_ble.GenericBleDeviceConnection;
 import org.cmucreatelab.android.genericblemodule.generic_ble.GenericBleScanner;
 import org.cmucreatelab.android.genericblemodule.generic_ble.listeners.GenericBleCharacteristicListener;
+import org.cmucreatelab.android.genericblemodule.generic_ble.listeners.GenericBleConnectionListener;
 import org.cmucreatelab.android.genericblemodule.generic_ble.listeners.GenericBleDescriptorListener;
 import org.cmucreatelab.android.genericblemodule.generic_ble.listeners.GenericBleServiceDiscoveryListener;
 
@@ -98,9 +100,17 @@ public class SerialBleHandler {
     }
 
     public void connectDevice(BluetoothDevice device, final ConnectionListener connectionListener) {
+        final GenericBleConnectionListener genericBleConnectionListener = new GenericBleConnectionListener() {
+            @Override
+            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) gatt.discoverServices();
+                else if (newState == BluetoothProfile.STATE_DISCONNECTED) connectionListener.onDisconnected();
+            }
+        };
         connectionTimer = new Timer(CONNECTION_TIMEOUT) {
             @Override
             public void timerExpires() {
+                Log.w(GenericBleDeviceConnection.LOG_TAG, "timerExpires in SerialBleHandler.connectDevice");
                 deviceConnection.disconnect();
                 connectionTimer = null;
                 connectionListener.onTimeout();
@@ -123,7 +133,7 @@ public class SerialBleHandler {
                 }
             }
         };
-        this.deviceConnection = new GenericBleDeviceConnection(device, this.appContext, serviceDiscoveryListener, characteristicListener, descriptorListener);
+        this.deviceConnection = new GenericBleDeviceConnection(device, this.appContext, genericBleConnectionListener, serviceDiscoveryListener, characteristicListener, descriptorListener);
         this.actionQueue = new ActionQueue(deviceConnection);
         this.deviceConnection.connect();
         connectionTimer.startTimer();
@@ -164,6 +174,7 @@ public class SerialBleHandler {
 
     public interface ConnectionListener {
         void onConnected(BluetoothGatt gatt);
+        void onDisconnected();
         void onTimeout();
     }
 

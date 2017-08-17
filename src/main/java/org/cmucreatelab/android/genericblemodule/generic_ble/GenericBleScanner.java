@@ -16,6 +16,7 @@ public class GenericBleScanner {
 
     private BluetoothAdapter bluetoothAdapter;
     private Handler handler;
+    private Runnable runnable;
     private boolean isScanning;
 
     private static final int REQUEST_ENABLE_BT = 0;
@@ -60,16 +61,18 @@ public class GenericBleScanner {
             Log.e(GenericBleDeviceConnection.LOG_TAG, "Tried to scanLeDevice before needsToRequestBluetoothEnabled");
             return;
         }
+        handler.removeCallbacks(runnable);
         if (enable) {
             // Stops scanning after a pre-defined scan period.
-            handler.postDelayed(new Runnable() {
+            runnable = new Runnable() {
                 @Override
                 public void run() {
                     isScanning = false;
                     bluetoothAdapter.stopLeScan(scannerCallback);
                     scannerCallback.onScanTimerExpired();
                 }
-            }, SCAN_PERIOD);
+            };
+            handler.postDelayed(runnable, SCAN_PERIOD);
             isScanning = true;
             bluetoothAdapter.startLeScan(scannerCallback);
         } else {

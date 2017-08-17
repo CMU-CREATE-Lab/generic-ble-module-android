@@ -91,6 +91,9 @@ public class GenericBleDeviceConnection {
             this.isConnected = false;
         }
         connectionListener.onConnectionStateChange(gatt, status, newState);
+        if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+            gatt.close();
+        }
     }
 
 
@@ -117,8 +120,7 @@ public class GenericBleDeviceConnection {
      * Disconnect from the BLE device.
      */
     public void disconnect() {
-        // TODO double-check this is all we need (vs. disconnect, and do we need to track isConnected)
-        this.gatt.close();
+        this.gatt.disconnect();
     }
 
 
